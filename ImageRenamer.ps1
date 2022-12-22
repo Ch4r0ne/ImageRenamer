@@ -5,6 +5,12 @@
 # Example path: "C:\Users\Username\Documents\ImageFolder".
 $folderPath = "C:\Users\Username\Documents\ImageFolder"
 
+# Check if the specified folder exists
+if (-not (Test-Path $folderPath)) {
+  Write-Output "The specified folder does not exist."
+  return
+}
+
 # List of supported image file extensions
 $supportedFileTypes = @('.jpg', '.jpeg', '.png')
 
@@ -25,7 +31,7 @@ Get-ChildItem -Path $folderPath -Filter "*.*" | ForEach-Object {
       $newFileName = $newFileName -replace '[^\w\.\-]', ''
     }
     else {
-      Write-Output "The image file $($_.Name) does not contain metadata with the date taken and was not renamed."
+      Write-Output "The image file $($_.Name) does not contain metadata"
       $newFileName = $null  # No valid new file name present
     }
 
@@ -34,8 +40,14 @@ Get-ChildItem -Path $folderPath -Filter "*.*" | ForEach-Object {
 
     # Rename image file if a valid new file name is present
     if ($newFileName) {
-      Rename-Item $_.FullName -NewName $newFileName
-      Write-Output "Image file $($_.Name) was renamed to $newFileName."
+      # Check if the new file name already exists in the folder
+      if (Test-Path (Join-Path $folderPath $newFileName)) {
+        Write-Output "file $newFileName already exists. The image $($_.Name) was not renamed."
+      }
+      else {
+        Rename-Item $_.FullName -NewName $newFileName
+        Write-Output "Image file $($_.Name) was renamed to $newFileName."
+      }
     }
   }
 }
